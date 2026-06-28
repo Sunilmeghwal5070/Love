@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Love</string>
+    <string name="ask_love_short">Ask Love</string>
+    <string name="ask_love_long">Ask Love Assistant</string>
+</resources>

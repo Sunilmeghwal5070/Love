@@ -1,0 +1,6 @@
+{
+  "name": "Love",
+  "description": "A personal, voice-controlled AI assistant similar to Jarvis.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
