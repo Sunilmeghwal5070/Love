@@ -75,7 +75,7 @@ class LoveViewModel(
                 if (apiKey.isEmpty() || apiKey == "MY_GEMINI_API_KEY" || apiKey == "placeholder") {
                     val msg = "Please set your Gemini API Key in the AI Studio Secrets panel."
                     repository.insertMessage("System", msg)
-                    tts?.speak(msg, TextToSpeech.QUEUE_FLUSH, null, "love_api_error")
+                    tts?.speak("Boss, Gemini API key set nahi hai. AI Studio Secrets panel mein key daliye.", TextToSpeech.QUEUE_FLUSH, null, "love_api_error")
                     _isProcessing.value = false
                     return@launch
                 }
@@ -92,7 +92,7 @@ class LoveViewModel(
                 
                 val response = RetrofitClient.service.generateContent(apiKey, request)
                 var responseText = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
-                    ?: "Sorry, I didn't catch that."
+                    ?: "Sorry boss, kuch samajh nahi aaya."
                 
                 var actionTarget: String? = null
                 
@@ -128,7 +128,7 @@ class LoveViewModel(
                 }
             } catch (e: Exception) {
                 repository.insertMessage("System", "Error communicating with Gemini: ${e.message}")
-                tts?.speak("I'm sorry, I encountered an error connecting to my servers.", TextToSpeech.QUEUE_FLUSH, null, "love_error")
+                tts?.speak("Boss, network ya API error aa gaya hai. Kripya bad mein try karein.", TextToSpeech.QUEUE_FLUSH, null, "love_error")
             } finally {
                 _isProcessing.value = false
             }

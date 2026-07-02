@@ -1,5 +1,6 @@
 package com.example.data
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -15,6 +16,7 @@ import java.util.concurrent.TimeUnit
 @Serializable
 data class GenerateContentRequest(
     val contents: List<Content>,
+    @SerialName("system_instruction")
     val systemInstruction: Content? = null
 )
 
@@ -39,7 +41,7 @@ data class Candidate(
 )
 
 interface GeminiApiService {
-    @POST("v1beta/models/gemini-3.5-flash:generateContent")
+    @POST("v1beta/models/gemini-1.5-flash:generateContent")
     suspend fun generateContent(
         @Query("key") apiKey: String,
         @Body request: GenerateContentRequest

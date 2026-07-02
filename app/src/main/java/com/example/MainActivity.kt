@@ -45,9 +45,25 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
   private var tts: TextToSpeech? = null
   private lateinit var viewModel: LoveViewModel
   private var speechRecognizer: android.speech.SpeechRecognizer? = null
+  private var isResumedState = false
+
+  override fun onResume() {
+      super.onResume()
+      isResumedState = true
+      // Trigger listening loop if we are not listening
+      if (viewModel.isListening.value == false && viewModel.showGlobalPopup.value == false) {
+          startInternalListening(isHotword = true)
+      }
+  }
+
+  override fun onPause() {
+      super.onPause()
+      isResumedState = false
+      speechRecognizer?.stopListening()
+  }
 
   private fun startInternalListening(isHotword: Boolean) {
-      if (speechRecognizer == null) return
+      if (speechRecognizer == null || !isResumedState) return
       if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
           val intent = android.content.Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
               putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
@@ -218,21 +234,45 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
             viewModel.actionTrigger.collect { targetApp ->
                 // Basic implementation to launch an app by name
                 try {
-                    val pm = packageManager
-                    val packages = pm.getInstalledApplications(android.content.pm.PackageManager.GET_META_DATA)
                     var launched = false
-                    for (packageInfo in packages) {
-                        val appName = pm.getApplicationLabel(packageInfo).toString()
-                        if (appName.equals(targetApp, ignoreCase = true) || appName.contains(targetApp, ignoreCase = true)) {
-                            val launchIntent = pm.getLaunchIntentForPackage(packageInfo.packageName)
-                            if (launchIntent != null) {
-                                launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                                startActivity(launchIntent)
-                                launched = true
-                                break
+                    val pm = packageManager
+                    
+                    // Fast path for common apps
+                    val commonApps = mapOf(
+                        "whatsapp" to "com.whatsapp",
+                        "youtube" to "com.google.android.youtube",
+                        "chrome" to "com.android.chrome",
+                        "camera" to "com.android.camera2", // varies by device
+                        "calculator" to "com.google.android.calculator"
+                    )
+                    
+                    val lowerTarget = targetApp.lowercase().trim()
+                    if (commonApps.containsKey(lowerTarget)) {
+                        val packageName = commonApps[lowerTarget]!!
+                        val launchIntent = pm.getLaunchIntentForPackage(packageName)
+                        if (launchIntent != null) {
+                            launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                            startActivity(launchIntent)
+                            launched = true
+                        }
+                    }
+                    
+                    if (!launched) {
+                        val packages = pm.getInstalledApplications(android.content.pm.PackageManager.GET_META_DATA)
+                        for (packageInfo in packages) {
+                            val appName = pm.getApplicationLabel(packageInfo).toString()
+                            if (appName.equals(targetApp, ignoreCase = true) || appName.contains(targetApp, ignoreCase = true)) {
+                                val launchIntent = pm.getLaunchIntentForPackage(packageInfo.packageName)
+                                if (launchIntent != null) {
+                                    launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    startActivity(launchIntent)
+                                    launched = true
+                                    break
+                                }
                             }
                         }
                     }
+                    
                     if (!launched) {
                         // Fallback: search play store
                         try {
@@ -331,10 +371,36 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
 
   override fun onInit(status: Int) {
       if (status == TextToSpeech.SUCCESS) {
-          val result = tts?.setLanguage(Locale("hi", "IN"))
+          val result = tts?.setLanguage(Locale.forLanguageTag("hi-IN"))
           if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-              tts?.language = Locale.ENGLISH
+              tts?.setLanguage(Locale.ENGLISH)
           }
+          
+          try {
+              // Try to find and set a higher quality or network voice for a more premium, less robotic sound
+              val voices = tts?.voices
+              if (voices != null) {
+                  val targetLang = tts?.language?.language ?: "en"
+                  val premiumVoice = voices.find { 
+                      it.locale.language == targetLang && it.isNetworkConnectionRequired 
+                  } ?: voices.find { 
+                      it.locale.language == targetLang && it.quality >= android.speech.tts.Voice.QUALITY_HIGH 
+                  } ?: voices.find {
+                      it.locale.language == targetLang && it.name.contains("network", ignoreCase = true)
+                  }
+                  
+                  if (premiumVoice != null) {
+                      tts?.voice = premiumVoice
+                  }
+              }
+          } catch (e: Exception) {
+              e.printStackTrace()
+          }
+          
+          // Adjust pitch and rate slightly for a more natural, conversational tone
+          tts?.setPitch(1.0f)
+          tts?.setSpeechRate(0.95f)
+
           tts?.speak("Hello boss", TextToSpeech.QUEUE_FLUSH, null, null)
       }
   }
