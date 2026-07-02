@@ -55,9 +55,9 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
               if (isHotword) {
                   putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 3000L)
               } else {
-                  putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 10000L)
-                  putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 10000L)
-                  putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 10000L)
+                  putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1000L)
+                  putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1000L)
+                  putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 1000L)
               }
           }
           try {
@@ -237,6 +237,7 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
                         if (appName.equals(targetApp, ignoreCase = true) || appName.contains(targetApp, ignoreCase = true)) {
                             val launchIntent = pm.getLaunchIntentForPackage(packageInfo.packageName)
                             if (launchIntent != null) {
+                                launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
                                 startActivity(launchIntent)
                                 launched = true
                                 break
@@ -245,10 +246,19 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
                     }
                     if (!launched) {
                         // Fallback: search play store
-                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
-                            data = android.net.Uri.parse("market://search?q=$targetApp")
+                        try {
+                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                                data = android.net.Uri.parse("market://search?q=$targetApp")
+                                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            startActivity(intent)
+                        } catch (e: android.content.ActivityNotFoundException) {
+                            val webIntent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                                data = android.net.Uri.parse("https://play.google.com/store/search?q=$targetApp")
+                                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            startActivity(webIntent)
                         }
-                        startActivity(intent)
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()

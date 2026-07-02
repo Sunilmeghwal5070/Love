@@ -63,44 +63,7 @@ fun HomeScreen(
 
     val context = LocalContext.current
     val recordAudioPermission = rememberPermissionState(Manifest.permission.RECORD_AUDIO)
-    val speechRecognizer = remember { SpeechRecognizer.createSpeechRecognizer(context) }
-    val recognizerIntent = remember {
-        Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "hi-IN")
-            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-        }
-    }
-
     val currentOnStopListening by rememberUpdatedState(onStopListening)
-
-    DisposableEffect(speechRecognizer) {
-        speechRecognizer.setRecognitionListener(object : RecognitionListener {
-            override fun onReadyForSpeech(params: Bundle?) {}
-            override fun onBeginningOfSpeech() {}
-            override fun onRmsChanged(rmsdB: Float) {}
-            override fun onBufferReceived(buffer: ByteArray?) {}
-            override fun onEndOfSpeech() {
-                // Wait for results
-            }
-            override fun onError(error: Int) {
-                currentOnStopListening(null)
-            }
-            override fun onResults(results: Bundle?) {
-                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                if (!matches.isNullOrEmpty()) {
-                    currentOnStopListening(matches[0])
-                } else {
-                    currentOnStopListening(null)
-                }
-            }
-            override fun onPartialResults(partialResults: Bundle?) {}
-            override fun onEvent(eventType: Int, params: Bundle?) {}
-        })
-        onDispose {
-            speechRecognizer.destroy()
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -146,13 +109,7 @@ fun HomeScreen(
                 isListening = isListening || isProcessing,
                 onClick = {
                     if (recordAudioPermission.status.isGranted) {
-                        if (isListening) {
-                            speechRecognizer.stopListening()
-                            onStopListening(null)
-                        } else {
-                            onStartListening()
-                            speechRecognizer.startListening(recognizerIntent)
-                        }
+                        onTriggerPopup()
                     } else {
                         recordAudioPermission.launchPermissionRequest()
                     }

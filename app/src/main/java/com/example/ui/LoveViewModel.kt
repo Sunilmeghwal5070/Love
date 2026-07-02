@@ -63,6 +63,9 @@ class LoveViewModel(
     }
 
     fun processUserQuery(query: String) {
+        val fillers = listOf("Ek second boss...", "Abhi dekhta hoon boss...", "Ji boss...", "Processing...")
+        tts?.speak(fillers.random(), TextToSpeech.QUEUE_FLUSH, null, "love_processing")
+        
         viewModelScope.launch {
             repository.insertMessage("User", query)
             _isProcessing.value = true
@@ -121,7 +124,6 @@ class LoveViewModel(
                 
                 if (actionTarget != null) {
                     _actionExecuting.value = actionTarget
-                    kotlinx.coroutines.delay(2000) // Simulate loading delay
                     _actionTrigger.emit(actionTarget)
                 }
             } catch (e: Exception) {
