@@ -54,10 +54,6 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
               putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "hi-IN")
               if (isHotword) {
                   putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 3000L)
-              } else {
-                  putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 500L)
-                  putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 500L)
-                  putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 500L)
               }
           }
           try {
@@ -88,7 +84,7 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
                 val isPopupOpen = viewModel.showGlobalPopup.value
                 
                 if (isActiveMode) {
-                    if (error != android.speech.SpeechRecognizer.ERROR_CLIENT && error != android.speech.SpeechRecognizer.ERROR_NO_MATCH) {
+                    if (error != android.speech.SpeechRecognizer.ERROR_CLIENT) {
                         tts?.speak("I didn't quite catch that, boss.", TextToSpeech.QUEUE_FLUSH, null, null)
                     }
                     viewModel.stopListening(null)
