@@ -55,9 +55,9 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
               if (isHotword) {
                   putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 3000L)
               } else {
-                  putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1000L)
-                  putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1000L)
-                  putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 1000L)
+                  putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 500L)
+                  putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 500L)
+                  putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 500L)
               }
           }
           try {
@@ -151,26 +151,19 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
     setContent {
       MyApplicationTheme {
         val permissionsToRequest = arrayOf(
-            android.Manifest.permission.RECORD_AUDIO,
-            android.Manifest.permission.CALL_PHONE,
-            android.Manifest.permission.READ_CONTACTS,
-            android.Manifest.permission.SEND_SMS
+            android.Manifest.permission.RECORD_AUDIO
         )
         
         val permissionsState = androidx.compose.runtime.remember {
             androidx.compose.runtime.mutableStateOf(
-                permissionsToRequest.all { 
-                    androidx.core.content.ContextCompat.checkSelfPermission(this, it) == android.content.pm.PackageManager.PERMISSION_GRANTED 
-                }
+                androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED 
             )
         }
 
         val multiplePermissionsLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
             androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
         ) { permissions ->
-            permissionsState.value = permissionsToRequest.all {
-                androidx.core.content.ContextCompat.checkSelfPermission(this, it) == android.content.pm.PackageManager.PERMISSION_GRANTED 
-            }
+            permissionsState.value = permissions[android.Manifest.permission.RECORD_AUDIO] == true
         }
 
         androidx.compose.runtime.LaunchedEffect(Unit) {
